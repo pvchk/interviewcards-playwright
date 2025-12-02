@@ -3,46 +3,43 @@ package tests;
 import com.microsoft.playwright.*;
 import org.junit.jupiter.api.*;
 import pages.MainPage;
+import assertions.ModalAssertions;
 
 public class ModalTest {
 
-    static Playwright playwright;
-    static Browser browser;
-    BrowserContext context;
-    Page page;
-    MainPage mainPage;
-
-    @BeforeAll
-    static void setUpClass() {
-        playwright = Playwright.create();
-        browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(false));
-    }
+    private Playwright playwright;
+    private Browser browser;
+    private Page page;
+    private MainPage mainPage;
 
     @BeforeEach
     void setUp() {
-        context = browser.newContext();
-        page = context.newPage();
-        page.navigate("http://localhost:3000"); // поменяй на свой URL
+        playwright = Playwright.create();
+        browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(false));
+        page = browser.newPage();
+        page.navigate("http://localhost:3000/"); // Твоя страница
         mainPage = new MainPage(page);
-    }
-
-    @Test
-    void modalOpensAfterButtonClick() {
-        mainPage.openModal();
-
-        mainPage.getModal()
-                .should()
-                .beVisible();
     }
 
     @AfterEach
     void tearDown() {
-        context.close();
+        browser.close();
+        playwright.close();
     }
 
+    @Test
+    void shouldOpenCardModal() {
+        // Кликаем "+ New Card"
+        mainPage.clickAddCard();
 
-    @AfterAll
-    static void tearDownClass() {
-        playwright.close();
+        // Проверяем, что модалка открылась
+        new ModalAssertions(mainPage.getCardModal())
+                .beVisible()
+                .haveTitle("Create New Flash Card");
+
+        // заполнить форму
+        mainPage.getCardModal().fillQuestion("What is Java?");
+        mainPage.getCardModal().fillAnswer("A programming language");
+        mainPage.getCardModal().clickSave();
     }
 }

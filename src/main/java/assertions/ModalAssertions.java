@@ -14,7 +14,7 @@ public class ModalAssertions {
 
     public ModalAssertions beVisible() {
         assertThat(modal.isVisible())
-                .as("Modal should be visible")
+                .as("Card modal should be visible")
                 .isTrue();
         return this;
     }
@@ -22,7 +22,7 @@ public class ModalAssertions {
     public ModalAssertions haveTitle(String expectedTitle) {
         String actual = modal.getTitle().textContent();
         assertThat(actual)
-                .as("Modal title should match expected")
+                .as("Card modal title should match expected")
                 .isEqualTo(expectedTitle);
         return this;
     }
