@@ -8,20 +8,24 @@ public class MainPage {
 
     private final Page page;
 
-    private final Locator openModalButton;
-    private final ModalComponent modal;
+    // Кнопка "+ New Card"
+    private final Locator addCardButton;
+
+    // Модальное окно карточки
+    private final ModalComponent cardModal;
 
     public MainPage(Page page) {
         this.page = page;
-        this.openModalButton = page.locator("#open-modal-btn");
-        this.modal = new ModalComponent(page);
+        this.addCardButton = page.locator("#addCardBtn");
+        this.cardModal = new ModalComponent(page); // передаем страницу в компонент
     }
 
-    public void openModal() {
-        openModalButton.click();
+    // Клик по кнопке "+ New Card"
+    public void clickAddCard() {
+        addCardButton.click();
     }
 
-    public ModalComponent getModal() {
-        return modal;
+    public ModalComponent getCardModal() {
+        return cardModal;
     }
 }
