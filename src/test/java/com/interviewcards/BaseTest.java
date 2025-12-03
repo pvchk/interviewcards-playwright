@@ -27,6 +27,7 @@ public abstract class BaseTest {
     static Process npmProcess;
     static String APP_DIR;
     static String APP_URL;
+    static String NPM_COMMAND;
     static int SERVER_STARTUP_TIMEOUT;
     
     // Test instance variables
@@ -71,14 +72,19 @@ public abstract class BaseTest {
         APP_URL = System.getProperty("app.url", 
             props.getProperty("app.url", "http://localhost:3000"));
         
+        // Get npm command - check system property first, then properties file, then default
+        NPM_COMMAND = System.getProperty("npm.command",
+            props.getProperty("npm.command", "npm run dev"));
+        
         // Get server startup timeout
         String timeoutStr = System.getProperty("server.startup.timeout",
-            props.getProperty("server.startup.timeout", "30"));
+            props.getProperty("server.startup.timeout", "60"));
         SERVER_STARTUP_TIMEOUT = Integer.parseInt(timeoutStr);
         
         System.out.println("Configuration loaded:");
         System.out.println("  App directory: " + APP_DIR);
         System.out.println("  App URL: " + APP_URL);
+        System.out.println("  NPM command: " + NPM_COMMAND);
         System.out.println("  Server timeout: " + SERVER_STARTUP_TIMEOUT + "s");
     }
     
@@ -92,19 +98,32 @@ public abstract class BaseTest {
     
     private static void startNpmApp() {
         try {
-            System.out.println("Starting npm app at " + APP_DIR);
-            ProcessBuilder processBuilder = new ProcessBuilder("npm", "start");
+            System.out.println("Starting Angular app at " + APP_DIR);
+            System.out.println("Using command: " + NPM_COMMAND);
+            
+            // Parse npm command (e.g., "npm run dev" -> ["npm", "run", "dev"])
+            String[] commandParts = NPM_COMMAND.split("\\s+");
+            
+            ProcessBuilder processBuilder = new ProcessBuilder(commandParts);
             processBuilder.directory(new File(APP_DIR));
             processBuilder.redirectErrorStream(true);
+            
+            // Set environment variables for better Angular dev server compatibility
+            processBuilder.environment().put("NODE_ENV", "development");
+            
             npmProcess = processBuilder.start();
             
             // Wait for server to be ready
+            System.out.println("Waiting for Angular dev server to start...");
             waitForServer(APP_URL, SERVER_STARTUP_TIMEOUT);
-            System.out.println("NPM app started successfully");
+            System.out.println("✓ Angular app started successfully at " + APP_URL);
             
         } catch (Exception e) {
-            System.err.println("Failed to start npm app: " + e.getMessage());
-            throw new RuntimeException("Could not start npm app", e);
+            System.err.println("❌ Failed to start Angular app: " + e.getMessage());
+            if (npmProcess != null && npmProcess.isAlive()) {
+                npmProcess.destroyForcibly();
+            }
+            throw new RuntimeException("Could not start Angular app. Make sure 'npm run dev' is configured in package.json", e);
         }
     }
     
@@ -161,17 +180,18 @@ public abstract class BaseTest {
     
     private static void stopNpmApp() {
         if (npmProcess != null && npmProcess.isAlive()) {
-            System.out.println("Stopping npm app...");
+            System.out.println("Stopping Angular dev server...");
             npmProcess.destroy();
             try {
                 // Wait for process to terminate, force kill if needed
-                boolean terminated = npmProcess.waitFor(5, TimeUnit.SECONDS);
+                // Angular dev server may need a moment to clean up
+                boolean terminated = npmProcess.waitFor(10, TimeUnit.SECONDS);
                 if (!terminated) {
+                    System.out.println("Angular dev server did not stop gracefully, forcing termination...");
                     npmProcess.destroyForcibly();
-                    System.out.println("Forcefully stopped npm app");
-                } else {
-                    System.out.println("NPM app stopped successfully");
+                    npmProcess.waitFor(2, TimeUnit.SECONDS);
                 }
+                System.out.println("✓ Angular dev server stopped");
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 npmProcess.destroyForcibly();
@@ -180,26 +200,42 @@ public abstract class BaseTest {
     }
     
     /**
-     * Wait for the server to be ready by checking if it responds to HTTP requests
+     * Wait for the Angular dev server to be ready by checking if it responds to HTTP requests
      */
     private static void waitForServer(String url, int timeoutSeconds) {
         long startTime = System.currentTimeMillis();
         long timeout = timeoutSeconds * 1000L;
+        int checkCount = 0;
+        
+        System.out.print("Waiting for server");
         
         while (System.currentTimeMillis() - startTime < timeout) {
             try {
                 HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
                 connection.setRequestMethod("GET");
-                connection.setConnectTimeout(1000);
-                connection.setReadTimeout(1000);
+                connection.setConnectTimeout(2000);
+                connection.setReadTimeout(2000);
+                connection.setInstanceFollowRedirects(false);
+                
                 int responseCode = connection.getResponseCode();
                 
+                // Angular dev server typically returns 200 OK or 304 Not Modified
+                // Also accept redirects (301, 302) as server is running
                 if (responseCode == HttpURLConnection.HTTP_OK || 
-                    responseCode == HttpURLConnection.HTTP_MOVED_TEMP) {
+                    responseCode == HttpURLConnection.HTTP_NOT_MODIFIED ||
+                    responseCode == HttpURLConnection.HTTP_MOVED_TEMP ||
+                    responseCode == HttpURLConnection.HTTP_MOVED_PERM) {
+                    System.out.println(); // New line after dots
                     return; // Server is ready
                 }
             } catch (IOException e) {
                 // Server not ready yet, continue waiting
+            }
+            
+            // Show progress every 2 seconds
+            checkCount++;
+            if (checkCount % 4 == 0) {
+                System.out.print(".");
             }
             
             try {
@@ -210,7 +246,15 @@ public abstract class BaseTest {
             }
         }
         
-        throw new RuntimeException("Server did not become ready within " + timeoutSeconds + " seconds");
+        System.out.println(); // New line after dots
+        throw new RuntimeException(
+            "Angular dev server did not become ready within " + timeoutSeconds + " seconds.\n" +
+            "Please check:\n" +
+            "  1. The app directory is correct: " + APP_DIR + "\n" +
+            "  2. 'npm run dev' command exists in package.json\n" +
+            "  3. Dependencies are installed (run 'npm install')\n" +
+            "  4. Port " + APP_URL.replace("http://localhost:", "") + " is not already in use"
+        );
     }
     
     @BeforeEach
