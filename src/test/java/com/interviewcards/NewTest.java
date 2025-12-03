@@ -19,7 +19,9 @@ public class NewTest extends BaseTest {
     
     @Test
     void shouldCheckPageContent() {
-        getPage().navigate("https://example.com");
+        getPage().navigate("http://localhost:3000/ua");
+        getPage().navigate("http://localhost:3000/ru");
+        getPage().navigate("http://localhost:3000/en");
         String heading = getPage().locator("h1").textContent();
         assertNotNull(heading);
         assertTrue(heading.contains("Example"));
