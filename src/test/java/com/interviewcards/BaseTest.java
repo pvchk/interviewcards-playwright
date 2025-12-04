@@ -3,9 +3,11 @@ package com.interviewcards;
 import com.microsoft.playwright.*;
 import org.junit.jupiter.api.*;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.Path;
@@ -90,10 +92,92 @@ public abstract class BaseTest {
     
     @BeforeAll
     static void setUp() {
-        // Start npm app first
+        // Setup Angular app: install dependencies, init DB, then start server
+        runNpmInstall();
+        runInitDb();
         startNpmApp();
         // Then launch browser
         launchBrowser();
+    }
+    
+    /**
+     * Run npm install if node_modules doesn't exist
+     */
+    private static void runNpmInstall() {
+        File appDir = new File(APP_DIR);
+        File nodeModules = new File(appDir, "node_modules");
+        
+        if (nodeModules.exists() && nodeModules.isDirectory()) {
+            System.out.println("✓ node_modules already exists, skipping npm install");
+            return;
+        }
+        
+        System.out.println("Installing npm dependencies...");
+        runNpmCommand(new String[]{"npm", "install"}, "npm install");
+    }
+    
+    /**
+     * Run npm run init-db to initialize the database
+     */
+    private static void runInitDb() {
+        System.out.println("Initializing database...");
+        runNpmCommand(new String[]{"npm", "run", "init-db"}, "npm run init-db");
+    }
+    
+    /**
+     * Run an npm command and wait for it to complete
+     * @param command The command to run (e.g., ["npm", "install"])
+     * @param commandName Human-readable name for logging
+     */
+    private static void runNpmCommand(String[] command, String commandName) {
+        try {
+            File appDir = new File(APP_DIR);
+            if (!appDir.exists() || !appDir.isDirectory()) {
+                throw new RuntimeException("App directory does not exist: " + APP_DIR);
+            }
+            
+            ProcessBuilder processBuilder = new ProcessBuilder(command);
+            processBuilder.directory(appDir);
+            processBuilder.redirectErrorStream(true);
+            
+            Process process = processBuilder.start();
+            
+            // Read output in a separate thread
+            StringBuilder output = new StringBuilder();
+            Thread outputReader = new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(process.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        output.append(line).append("\n");
+                        System.out.println("[npm] " + line);
+                    }
+                } catch (IOException e) {
+                    // Ignore if process ends
+                }
+            });
+            outputReader.setDaemon(true);
+            outputReader.start();
+            
+            // Wait for process to complete
+            int exitCode = process.waitFor();
+            outputReader.join(1000); // Wait a bit for output to finish
+            
+            if (exitCode != 0) {
+                throw new RuntimeException(
+                    commandName + " failed with exit code " + exitCode + 
+                    (output.length() > 0 ? "\nOutput:\n" + output.toString() : "")
+                );
+            }
+            
+            System.out.println("✓ " + commandName + " completed successfully");
+            
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new RuntimeException(commandName + " was interrupted", e);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to run " + commandName + ": " + e.getMessage(), e);
+        }
     }
     
     private static void startNpmApp() {
