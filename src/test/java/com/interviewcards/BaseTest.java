@@ -76,8 +76,8 @@ public abstract class BaseTest {
         
         // Get npm command - check system property first, then properties file, then default
         NPM_COMMAND = System.getProperty("npm.command",
-            props.getProperty("npm.command", "npm run dev"));
-        
+            props.getProperty("npm.command", "npm install && npm run init-db && npm run dev"));
+
         // Get server startup timeout
         String timeoutStr = System.getProperty("server.startup.timeout",
             props.getProperty("server.startup.timeout", "60"));
