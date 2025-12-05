@@ -20,29 +20,29 @@ import java.util.concurrent.TimeUnit;
  * Handles browser setup and teardown with better error handling.
  */
 public abstract class BaseTest {
-    
+
     // Shared Playwright instance
-    static Playwright playwright;
-    static Browser browser;
-    
+    protected static Playwright playwright;
+    protected static Browser browser;
+
+    // Test instance variables
+    protected BrowserContext context;
+    protected Page page;
+
     // NPM server process
     static Process npmProcess;
     static String APP_DIR;
     static String APP_URL;
     static String NPM_COMMAND;
     static int SERVER_STARTUP_TIMEOUT;
-    
-    // Test instance variables
-    BrowserContext context;
-    Page page;
-    
+
     /**
      * Load configuration from test.properties file
      */
     static {
         loadConfiguration();
     }
-    
+
     private static void loadConfiguration() {
         Properties props = new Properties();
         try (InputStream input = BaseTest.class.getClassLoader().getResourceAsStream("test.properties")) {
@@ -54,13 +54,13 @@ public abstract class BaseTest {
         } catch (IOException e) {
             System.err.println("Warning: Could not load test.properties: " + e.getMessage());
         }
-        
+
         // Get app directory - check system property first, then properties file, then default
         String appDirProperty = System.getProperty("app.dir");
         if (appDirProperty == null || appDirProperty.isEmpty()) {
             appDirProperty = props.getProperty("app.dir", "../interviewcards");
         }
-        
+
         // Resolve relative paths relative to project root
         Path appDirPath = Paths.get(appDirProperty);
         if (!appDirPath.isAbsolute()) {
@@ -69,11 +69,11 @@ public abstract class BaseTest {
             appDirPath = Paths.get(projectRoot).resolve(appDirPath).normalize();
         }
         APP_DIR = appDirPath.toString();
-        
+
         // Get app URL - check system property first, then properties file, then default
-        APP_URL = System.getProperty("app.url", 
+        APP_URL = System.getProperty("app.url",
             props.getProperty("app.url", "http://localhost:3000"));
-        
+
         // Get npm command - check system property first, then properties file, then default
         NPM_COMMAND = System.getProperty("npm.command",
             props.getProperty("npm.command", "npm install && npm run init-db && npm run dev"));
@@ -82,16 +82,16 @@ public abstract class BaseTest {
         String timeoutStr = System.getProperty("server.startup.timeout",
             props.getProperty("server.startup.timeout", "60"));
         SERVER_STARTUP_TIMEOUT = Integer.parseInt(timeoutStr);
-        
+
         System.out.println("Configuration loaded:");
         System.out.println("  App directory: " + APP_DIR);
         System.out.println("  App URL: " + APP_URL);
         System.out.println("  NPM command: " + NPM_COMMAND);
         System.out.println("  Server timeout: " + SERVER_STARTUP_TIMEOUT + "s");
     }
-    
+
     @BeforeAll
-    static void setUp() {
+    static void globalSetup() {
         // Setup Angular app: install dependencies, init DB, then start server
         runNpmInstall();
         runInitDb();
@@ -99,23 +99,23 @@ public abstract class BaseTest {
         // Then launch browser
         launchBrowser();
     }
-    
+
     /**
      * Run npm install if node_modules doesn't exist
      */
     private static void runNpmInstall() {
         File appDir = new File(APP_DIR);
         File nodeModules = new File(appDir, "node_modules");
-        
+
         if (nodeModules.exists() && nodeModules.isDirectory()) {
             System.out.println("✓ node_modules already exists, skipping npm install");
             return;
         }
-        
+
         System.out.println("Installing npm dependencies...");
         runNpmCommand(new String[]{"npm", "install"}, "npm install");
     }
-    
+
     /**
      * Run npm run init-db to initialize the database
      */
@@ -123,7 +123,7 @@ public abstract class BaseTest {
         System.out.println("Initializing database...");
         runNpmCommand(new String[]{"npm", "run", "init-db"}, "npm run init-db");
     }
-    
+
     /**
      * Run an npm command and wait for it to complete
      * @param command The command to run (e.g., ["npm", "install"])
@@ -135,13 +135,13 @@ public abstract class BaseTest {
             if (!appDir.exists() || !appDir.isDirectory()) {
                 throw new RuntimeException("App directory does not exist: " + APP_DIR);
             }
-            
+
             ProcessBuilder processBuilder = new ProcessBuilder(command);
             processBuilder.directory(appDir);
             processBuilder.redirectErrorStream(true);
-            
+
             Process process = processBuilder.start();
-            
+
             // Read output in a separate thread
             StringBuilder output = new StringBuilder();
             Thread outputReader = new Thread(() -> {
@@ -158,20 +158,20 @@ public abstract class BaseTest {
             });
             outputReader.setDaemon(true);
             outputReader.start();
-            
+
             // Wait for process to complete
             int exitCode = process.waitFor();
             outputReader.join(1000); // Wait a bit for output to finish
-            
+
             if (exitCode != 0) {
                 throw new RuntimeException(
-                    commandName + " failed with exit code " + exitCode + 
+                    commandName + " failed with exit code " + exitCode +
                     (output.length() > 0 ? "\nOutput:\n" + output.toString() : "")
                 );
             }
-            
+
             System.out.println("✓ " + commandName + " completed successfully");
-            
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException(commandName + " was interrupted", e);
@@ -179,29 +179,29 @@ public abstract class BaseTest {
             throw new RuntimeException("Failed to run " + commandName + ": " + e.getMessage(), e);
         }
     }
-    
+
     private static void startNpmApp() {
         try {
             System.out.println("Starting Angular app at " + APP_DIR);
             System.out.println("Using command: " + NPM_COMMAND);
-            
+
             // Parse npm command (e.g., "npm run dev" -> ["npm", "run", "dev"])
             String[] commandParts = NPM_COMMAND.split("\\s+");
-            
+
             ProcessBuilder processBuilder = new ProcessBuilder(commandParts);
             processBuilder.directory(new File(APP_DIR));
             processBuilder.redirectErrorStream(true);
-            
+
             // Set environment variables for better Angular dev server compatibility
             processBuilder.environment().put("NODE_ENV", "development");
-            
+
             npmProcess = processBuilder.start();
-            
+
             // Wait for server to be ready
             System.out.println("Waiting for Angular dev server to start...");
             waitForServer(APP_URL, SERVER_STARTUP_TIMEOUT);
             System.out.println("✓ Angular app started successfully at " + APP_URL);
-            
+
         } catch (Exception e) {
             System.err.println("❌ Failed to start Angular app: " + e.getMessage());
             if (npmProcess != null && npmProcess.isAlive()) {
@@ -210,7 +210,7 @@ public abstract class BaseTest {
             throw new RuntimeException("Could not start Angular app. Make sure 'npm run dev' is configured in package.json", e);
         }
     }
-    
+
     private static void launchBrowser() {
         try {
             playwright = Playwright.create();
@@ -246,13 +246,13 @@ public abstract class BaseTest {
     }
     
     @AfterAll
-    static void tearDown() {
+    static void globalTearDown() {
         // Close browser first
         closeBrowser();
         // Then stop npm app
         stopNpmApp();
     }
-    
+
     private static void closeBrowser() {
         if (browser != null) {
             browser.close();
@@ -261,7 +261,7 @@ public abstract class BaseTest {
             playwright.close();
         }
     }
-    
+
     private static void stopNpmApp() {
         if (npmProcess != null && npmProcess.isAlive()) {
             System.out.println("Stopping Angular dev server...");
@@ -282,7 +282,7 @@ public abstract class BaseTest {
             }
         }
     }
-    
+
     /**
      * Wait for the Angular dev server to be ready by checking if it responds to HTTP requests
      */
@@ -290,9 +290,9 @@ public abstract class BaseTest {
         long startTime = System.currentTimeMillis();
         long timeout = timeoutSeconds * 1000L;
         int checkCount = 0;
-        
+
         System.out.print("Waiting for server");
-        
+
         while (System.currentTimeMillis() - startTime < timeout) {
             try {
                 HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
@@ -300,12 +300,12 @@ public abstract class BaseTest {
                 connection.setConnectTimeout(2000);
                 connection.setReadTimeout(2000);
                 connection.setInstanceFollowRedirects(false);
-                
+
                 int responseCode = connection.getResponseCode();
-                
+
                 // Angular dev server typically returns 200 OK or 304 Not Modified
                 // Also accept redirects (301, 302) as server is running
-                if (responseCode == HttpURLConnection.HTTP_OK || 
+                if (responseCode == HttpURLConnection.HTTP_OK ||
                     responseCode == HttpURLConnection.HTTP_NOT_MODIFIED ||
                     responseCode == HttpURLConnection.HTTP_MOVED_TEMP ||
                     responseCode == HttpURLConnection.HTTP_MOVED_PERM) {
@@ -315,13 +315,13 @@ public abstract class BaseTest {
             } catch (IOException e) {
                 // Server not ready yet, continue waiting
             }
-            
+
             // Show progress every 2 seconds
             checkCount++;
             if (checkCount % 4 == 0) {
                 System.out.print(".");
             }
-            
+
             try {
                 Thread.sleep(500); // Wait 500ms before next check
             } catch (InterruptedException e) {
@@ -329,7 +329,7 @@ public abstract class BaseTest {
                 throw new RuntimeException("Interrupted while waiting for server", e);
             }
         }
-        
+
         System.out.println(); // New line after dots
         throw new RuntimeException(
             "Angular dev server did not become ready within " + timeoutSeconds + " seconds.\n" +
@@ -340,7 +340,7 @@ public abstract class BaseTest {
             "  4. Port " + APP_URL.replace("http://localhost:", "") + " is not already in use"
         );
     }
-    
+
     @BeforeEach
     void createContextAndPage() {
         if (browser == null) {
@@ -375,4 +375,3 @@ public abstract class BaseTest {
         return page;
     }
 }
-
