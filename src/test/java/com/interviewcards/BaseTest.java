@@ -76,7 +76,7 @@ public abstract class BaseTest {
 
         // Get npm command - check system property first, then properties file, then default
         NPM_COMMAND = System.getProperty("npm.command",
-            props.getProperty("npm.command", "npm install && npm run init-db && npm run dev"));
+            props.getProperty("npm.command", "npm install && npm run init-db && npm run migrate-auth && npm run build && npm start"));
 
         // Get server startup timeout
         String timeoutStr = System.getProperty("server.startup.timeout",
@@ -92,9 +92,11 @@ public abstract class BaseTest {
 
     @BeforeAll
     static void globalSetup() {
-        // Setup Angular app: install dependencies, init DB, then start server
+        // Setup Angular app: install dependencies, init DB, migrate auth, build, then start server
         runNpmInstall();
         runInitDb();
+        runMigrateAuth();
+        runBuild();
         startNpmApp();
         // Then launch browser
         launchBrowser();
@@ -122,6 +124,22 @@ public abstract class BaseTest {
     private static void runInitDb() {
         System.out.println("Initializing database...");
         runNpmCommand(new String[]{"npm", "run", "init-db"}, "npm run init-db");
+    }
+
+    /**
+     * Run npm run migrate-auth to migrate authentication
+     */
+    private static void runMigrateAuth() {
+        System.out.println("Running auth migration...");
+        runNpmCommand(new String[]{"npm", "run", "migrate-auth"}, "npm run migrate-auth");
+    }
+
+    /**
+     * Run npm run build to build the application
+     */
+    private static void runBuild() {
+        System.out.println("Building application...");
+        runNpmCommand(new String[]{"npm", "run", "build"}, "npm run build");
     }
 
     /**
@@ -183,10 +201,20 @@ public abstract class BaseTest {
     private static void startNpmApp() {
         try {
             System.out.println("Starting Angular app at " + APP_DIR);
-            System.out.println("Using command: " + NPM_COMMAND);
+            
+            // Extract the actual start command from NPM_COMMAND
+            // If NPM_COMMAND contains "&&", extract the last command after the last "&&"
+            // Otherwise, use the command as-is
+            String startCommand = NPM_COMMAND;
+            if (NPM_COMMAND.contains("&&")) {
+                String[] parts = NPM_COMMAND.split("&&");
+                startCommand = parts[parts.length - 1].trim();
+            }
+            
+            System.out.println("Using start command: " + startCommand);
 
-            // Parse npm command (e.g., "npm run dev" -> ["npm", "run", "dev"])
-            String[] commandParts = NPM_COMMAND.split("\\s+");
+            // Parse npm command (e.g., "npm start" -> ["npm", "start"] or "npm run dev" -> ["npm", "run", "dev"])
+            String[] commandParts = startCommand.split("\\s+");
 
             ProcessBuilder processBuilder = new ProcessBuilder(commandParts);
             processBuilder.directory(new File(APP_DIR));
@@ -197,17 +225,54 @@ public abstract class BaseTest {
 
             npmProcess = processBuilder.start();
 
+            // Monitor process output to detect early failures
+            Thread outputMonitor = new Thread(() -> {
+                try (BufferedReader reader = new BufferedReader(
+                        new InputStreamReader(npmProcess.getInputStream()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        System.out.println("[npm] " + line);
+                        // Check for common error patterns
+                        if (line.toLowerCase().contains("error") && 
+                            (line.toLowerCase().contains("eaddrinuse") || 
+                             line.toLowerCase().contains("port") && line.toLowerCase().contains("already"))) {
+                            System.err.println("⚠️  Warning: Port may already be in use");
+                        }
+                    }
+                } catch (IOException e) {
+                    // Process ended or stream closed
+                }
+            });
+            outputMonitor.setDaemon(true);
+            outputMonitor.start();
+
+            // Check if process is still alive after a short delay
+            Thread.sleep(2000);
+            if (!npmProcess.isAlive()) {
+                int exitCode = npmProcess.exitValue();
+                throw new RuntimeException(
+                    "NPM process exited immediately with code " + exitCode + 
+                    ". Check the output above for errors."
+                );
+            }
+
             // Wait for server to be ready
             System.out.println("Waiting for Angular dev server to start...");
             waitForServer(APP_URL, SERVER_STARTUP_TIMEOUT);
             System.out.println("✓ Angular app started successfully at " + APP_URL);
 
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            if (npmProcess != null && npmProcess.isAlive()) {
+                npmProcess.destroyForcibly();
+            }
+            throw new RuntimeException("Interrupted while starting Angular app", e);
         } catch (Exception e) {
             System.err.println("❌ Failed to start Angular app: " + e.getMessage());
             if (npmProcess != null && npmProcess.isAlive()) {
                 npmProcess.destroyForcibly();
             }
-            throw new RuntimeException("Could not start Angular app. Make sure 'npm run dev' is configured in package.json", e);
+            throw new RuntimeException("Could not start Angular app. Make sure the start command is correct in npm.command", e);
         }
     }
 
