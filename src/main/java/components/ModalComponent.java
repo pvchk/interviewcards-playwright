@@ -7,7 +7,7 @@ public class ModalComponent {
 
     private final Page page;
 
-    private final Locator modal;
+    private final Locator root;
     private final Locator title;
     private final Locator cancelBtn;
     private final Locator saveBtn;
@@ -16,20 +16,28 @@ public class ModalComponent {
 
     public ModalComponent(Page page) {
         this.page = page;
-        this.modal = page.locator("#cardModal");
-        this.title = page.locator("#modalTitle");
-        this.cancelBtn = page.locator("#cancelBtn");
-        this.saveBtn = page.locator("#saveBtn");
-        this.questionInput = page.locator("#questionInput");
-        this.answerInput = page.locator("#answerInput");
+
+        // Локатор на саму модалку по классу show
+        this.root = page.locator(".modal.show");
+        // Заголовок модалки
+        this.title = root.locator("h2");
+        // Кнопки и поля внутри модалки
+        this.cancelBtn = root.locator("#cancelBtn");
+        this.saveBtn = root.locator("#saveBtn");
+        this.questionInput = root.locator("#questionInput");
+        this.answerInput = root.locator("#answerInput");
     }
 
-    public boolean isVisible() {
-        return modal.isVisible();
+    public Locator getRoot() {
+        return root;
     }
 
     public Locator getTitle() {
         return title;
+    }
+
+    public boolean isVisible() {
+        return root.isVisible();
     }
 
     public void clickCancel() {

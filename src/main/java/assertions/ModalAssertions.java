@@ -1,8 +1,9 @@
 package assertions;
 
+import com.microsoft.playwright.Locator;
 import components.ModalComponent;
 
-import static org.assertj.core.api.Assertions.assertThat;
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
 
 public class ModalAssertions {
 
@@ -13,17 +14,14 @@ public class ModalAssertions {
     }
 
     public ModalAssertions beVisible() {
-        assertThat(modal.isVisible())
-                .as("Card modal should be visible")
-                .isTrue();
+        // Проверяем, что корневой элемент модалки видим
+        assertThat(modal.getRoot()).isVisible();
         return this;
     }
 
     public ModalAssertions haveTitle(String expectedTitle) {
-        String actual = modal.getTitle().textContent();
-        assertThat(actual)
-                .as("Card modal title should match expected")
-                .isEqualTo(expectedTitle);
+        Locator title = modal.getTitle();
+        assertThat(title).hasText(expectedTitle);
         return this;
     }
 }
