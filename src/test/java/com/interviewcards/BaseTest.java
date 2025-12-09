@@ -1,6 +1,7 @@
 package com.interviewcards;
 
 import com.microsoft.playwright.*;
+import config.Config;
 import org.junit.jupiter.api.*;
 
 import java.io.BufferedReader;
@@ -72,15 +73,15 @@ public abstract class BaseTest {
 
         // Get app URL - check system property first, then properties file, then default
         APP_URL = System.getProperty("app.url",
-            props.getProperty("app.url", "http://localhost:3000"));
+                props.getProperty("app.url", Config.BASE_URL));
 
         // Get npm command - check system property first, then properties file, then default
         NPM_COMMAND = System.getProperty("npm.command",
-            props.getProperty("npm.command", "npm install && npm run init-db && npm run migrate-auth && npm run build && npm start"));
+                props.getProperty("npm.command", "npm install && npm run init-db && npm run migrate-auth && npm run build && npm start"));
 
         // Get server startup timeout
         String timeoutStr = System.getProperty("server.startup.timeout",
-            props.getProperty("server.startup.timeout", "60"));
+                props.getProperty("server.startup.timeout", "60"));
         SERVER_STARTUP_TIMEOUT = Integer.parseInt(timeoutStr);
 
         System.out.println("Configuration loaded:");
@@ -144,7 +145,8 @@ public abstract class BaseTest {
 
     /**
      * Run an npm command and wait for it to complete
-     * @param command The command to run (e.g., ["npm", "install"])
+     *
+     * @param command     The command to run (e.g., ["npm", "install"])
      * @param commandName Human-readable name for logging
      */
     private static void runNpmCommand(String[] command, String commandName) {
@@ -183,8 +185,8 @@ public abstract class BaseTest {
 
             if (exitCode != 0) {
                 throw new RuntimeException(
-                    commandName + " failed with exit code " + exitCode +
-                    (output.length() > 0 ? "\nOutput:\n" + output.toString() : "")
+                        commandName + " failed with exit code " + exitCode +
+                                (output.length() > 0 ? "\nOutput:\n" + output.toString() : "")
                 );
             }
 
@@ -201,7 +203,7 @@ public abstract class BaseTest {
     private static void startNpmApp() {
         try {
             System.out.println("Starting Angular app at " + APP_DIR);
-            
+
             // Extract the actual start command from NPM_COMMAND
             // If NPM_COMMAND contains "&&", extract the last command after the last "&&"
             // Otherwise, use the command as-is
@@ -210,7 +212,7 @@ public abstract class BaseTest {
                 String[] parts = NPM_COMMAND.split("&&");
                 startCommand = parts[parts.length - 1].trim();
             }
-            
+
             System.out.println("Using start command: " + startCommand);
 
             // Parse npm command (e.g., "npm start" -> ["npm", "start"] or "npm run dev" -> ["npm", "run", "dev"])
@@ -233,9 +235,9 @@ public abstract class BaseTest {
                     while ((line = reader.readLine()) != null) {
                         System.out.println("[npm] " + line);
                         // Check for common error patterns
-                        if (line.toLowerCase().contains("error") && 
-                            (line.toLowerCase().contains("eaddrinuse") || 
-                             line.toLowerCase().contains("port") && line.toLowerCase().contains("already"))) {
+                        if (line.toLowerCase().contains("error") &&
+                                (line.toLowerCase().contains("eaddrinuse") ||
+                                        line.toLowerCase().contains("port") && line.toLowerCase().contains("already"))) {
                             System.err.println("⚠️  Warning: Port may already be in use");
                         }
                     }
@@ -251,8 +253,8 @@ public abstract class BaseTest {
             if (!npmProcess.isAlive()) {
                 int exitCode = npmProcess.exitValue();
                 throw new RuntimeException(
-                    "NPM process exited immediately with code " + exitCode + 
-                    ". Check the output above for errors."
+                        "NPM process exited immediately with code " + exitCode +
+                                ". Check the output above for errors."
                 );
             }
 
@@ -279,20 +281,20 @@ public abstract class BaseTest {
     private static void launchBrowser() {
         try {
             playwright = Playwright.create();
-            
+
             // Try to launch browser with error handling
             // Check system property for headless mode, default to false (headed mode)
             String headlessProperty = System.getProperty("headless", "false");
             boolean headless = Boolean.parseBoolean(headlessProperty);
-            
+
             BrowserType.LaunchOptions options = new BrowserType.LaunchOptions()
                     .setHeadless(headless);
-            
+
             browser = playwright.chromium().launch(options);
-            
+
         } catch (PlaywrightException e) {
             String errorMessage = e.getMessage();
-            
+
             if (errorMessage != null && errorMessage.contains("Executable doesn't exist")) {
                 System.err.println("\n❌ ERROR: Playwright browsers are not installed!");
                 System.err.println("\nPlease install browsers before running tests:");
@@ -305,11 +307,11 @@ public abstract class BaseTest {
                 System.err.println("  mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args=\"install chromium\"");
                 System.err.println("\nOr check your internet connection and try again.\n");
             }
-            
+
             throw new AssertionError("Failed to launch browser. See error messages above for installation instructions.", e);
         }
     }
-    
+
     @AfterAll
     static void globalTearDown() {
         // Close browser first
@@ -371,9 +373,9 @@ public abstract class BaseTest {
                 // Angular dev server typically returns 200 OK or 304 Not Modified
                 // Also accept redirects (301, 302) as server is running
                 if (responseCode == HttpURLConnection.HTTP_OK ||
-                    responseCode == HttpURLConnection.HTTP_NOT_MODIFIED ||
-                    responseCode == HttpURLConnection.HTTP_MOVED_TEMP ||
-                    responseCode == HttpURLConnection.HTTP_MOVED_PERM) {
+                        responseCode == HttpURLConnection.HTTP_NOT_MODIFIED ||
+                        responseCode == HttpURLConnection.HTTP_MOVED_TEMP ||
+                        responseCode == HttpURLConnection.HTTP_MOVED_PERM) {
                     System.out.println(); // New line after dots
                     return; // Server is ready
                 }
@@ -397,12 +399,12 @@ public abstract class BaseTest {
 
         System.out.println(); // New line after dots
         throw new RuntimeException(
-            "Angular dev server did not become ready within " + timeoutSeconds + " seconds.\n" +
-            "Please check:\n" +
-            "  1. The app directory is correct: " + APP_DIR + "\n" +
-            "  2. 'npm run dev' command exists in package.json\n" +
-            "  3. Dependencies are installed (run 'npm install')\n" +
-            "  4. Port " + APP_URL.replace("http://localhost:", "") + " is not already in use"
+                "Angular dev server did not become ready within " + timeoutSeconds + " seconds.\n" +
+                        "Please check:\n" +
+                        "  1. The app directory is correct: " + APP_DIR + "\n" +
+                        "  2. 'npm run dev' command exists in package.json\n" +
+                        "  3. Dependencies are installed (run 'npm install')\n" +
+                        "  4. Port " + APP_URL.replace("http://localhost:", "") + " is not already in use"
         );
     }
 
@@ -414,16 +416,17 @@ public abstract class BaseTest {
         context = browser.newContext();
         page = context.newPage();
     }
-    
+
     @AfterEach
     void closeContext() {
         if (context != null) {
             context.close();
         }
     }
-    
+
     /**
      * Override this method to change headless mode for specific tests
+     *
      * @return true to run in headless mode, false to show browser
      */
     protected boolean isHeadless() {
@@ -431,9 +434,10 @@ public abstract class BaseTest {
         String headless = System.getProperty("headless", "false");
         return Boolean.parseBoolean(headless);
     }
-    
+
     /**
      * Get the current page instance
+     *
      * @return the Playwright Page instance
      */
     protected Page getPage() {
