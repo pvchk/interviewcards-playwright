@@ -1,31 +1,34 @@
 package pages;
 
-import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
 import components.ModalComponent;
+import config.Config;
 
 public class MainPage {
 
+    public static final String URL = "/en";
+
     private final Page page;
 
-    // Кнопка "+ New Card"
-    private final Locator addCardButton;
-
-    // Модальное окно карточки
-    private final ModalComponent cardModal;
+    private final String addCardButton = "#addCardBtn";
 
     public MainPage(Page page) {
         this.page = page;
-        this.addCardButton = page.locator("#addCardBtn");
-        this.cardModal = new ModalComponent(page); // передаем страницу в компонент
     }
 
-    // Клик по кнопке "+ New Card"
+    public void open() {
+        page.navigate(Config.BASE_URL + URL);
+    }
+
     public void clickAddCard() {
-        addCardButton.click();
+        page.getByRole(
+                AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("+ New Card")
+        ).click();
     }
 
-    public ModalComponent getCardModal() {
-        return cardModal;
+    public ModalComponent modal() {
+        return new ModalComponent(page);
     }
 }
