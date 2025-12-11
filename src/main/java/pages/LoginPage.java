@@ -1,5 +1,6 @@
 package pages;
 
+import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import config.Config;
@@ -21,10 +22,7 @@ public class LoginPage {
     public void login(String username, String password) {
         page.fill(USERNAME_INPUT, username);
         page.fill(PASSWORD_INPUT, password);
-        page.getByRole(
-                AriaRole.BUTTON,
-                new Page.GetByRoleOptions().setName("Login")
-        ).click();
-
+        page.locator("button[type='submit']").click();
+        page.waitForURL(Config.BASE_URL + MainPage.URL);
     }
 }
