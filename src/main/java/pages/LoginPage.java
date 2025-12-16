@@ -1,6 +1,7 @@
 package pages;
 
 import com.microsoft.playwright.Page;
+import com.microsoft.playwright.options.AriaRole;
 import config.Config;
 
 public class LoginPage {
@@ -19,10 +20,17 @@ public class LoginPage {
 
     public MainPage login(String username, String password) {
         open();
+
         page.fill(USERNAME_INPUT, username);
         page.fill(PASSWORD_INPUT, password);
+
         page.locator("button[type='submit']").click();
-        page.waitForURL(Config.BASE_URL + MainPage.URL);
+
+        page.getByRole(
+                AriaRole.BUTTON,
+                new Page.GetByRoleOptions().setName("+ New Card")
+        ).waitFor();
+
         return new MainPage(page);
     }
 }
