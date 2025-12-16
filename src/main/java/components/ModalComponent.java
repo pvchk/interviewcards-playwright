@@ -13,6 +13,11 @@ public class ModalComponent {
     private final Locator saveBtn;
     private final Locator questionInput;
     private final Locator answerInput;
+    private static final String MODAL_TITLE = "Create New Flash Card";
+
+    public String getModalTitle() {
+        return MODAL_TITLE;
+    }
 
     public ModalComponent(Page page) {
         this.page = page;

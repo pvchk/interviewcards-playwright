@@ -13,7 +13,9 @@ public class MainPage {
 
     private final Page page;
 
-    private final String addCardButton = "#addCardBtn";
+    private final String logoutButton = "//button[normalize-space()='Logout']";
+
+    public static final String INVALID_USERNAME_PASSWORD = "Invalid username or password. Please try again.";
 
     public MainPage(Page page) {
         this.page = page;
@@ -23,14 +25,24 @@ public class MainPage {
         page.navigate(Config.BASE_URL + URL);
     }
 
-    public void clickAddCard() {
+    public ModalComponent clickAddCard() {
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("+ New Card"))
                 .waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
 
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("+ New Card")).click();
+        return new ModalComponent(page);
     }
 
     public ModalComponent modal() {
         return new ModalComponent(page);
     }
+
+    public MainPage title() {
+        return new MainPage(page);
+    }
+
+    public boolean isLogoutButtonDisplayed() {
+        return page.locator(logoutButton).isVisible();
+    }
+
 }

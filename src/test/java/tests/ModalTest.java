@@ -1,23 +1,29 @@
 package tests;
 
+import com.interviewcards.BaseTest;
 import components.ModalComponent;
+import config.Config;
 import org.junit.jupiter.api.*;
+import pages.LoginPage;
 import pages.MainPage;
 import assertions.ModalAssertions;
 
-public class ModalTest extends LoginTest {
+public class ModalTest extends BaseTest {
 
     @Test
     void openModalTest() {
-        MainPage main = new MainPage(page);
-        main.open(); // перейти на страницу карточек
+        loginPage = new LoginPage(page);
+        loginPage.login(Config.EMAIL, Config.PASSWORD);
 
-        main.clickAddCard();
+        mainPage = new MainPage(page);
+        mainPage.open();
+
+        modalComponent = mainPage.clickAddCard();
 
         ModalComponent modal = new ModalComponent(page);
         ModalAssertions modalAssert = new ModalAssertions(modal);
 
         modalAssert.beVisible();
-        modalAssert.haveTitle("Create New Flash Card");
+        modalAssert.haveTitle(modalComponent.getModalTitle());
     }
 }
