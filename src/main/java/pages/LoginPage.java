@@ -1,8 +1,6 @@
 package pages;
 
-import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
-import com.microsoft.playwright.options.AriaRole;
 import config.Config;
 
 public class LoginPage {
@@ -15,14 +13,16 @@ public class LoginPage {
         this.page = page;
     }
 
-    public void open() {
+    private void open() {
         page.navigate(Config.BASE_URL + LOGIN_URL);
     }
 
-    public void login(String username, String password) {
+    public MainPage login(String username, String password) {
+        open();
         page.fill(USERNAME_INPUT, username);
         page.fill(PASSWORD_INPUT, password);
         page.locator("button[type='submit']").click();
         page.waitForURL(Config.BASE_URL + MainPage.URL);
+        return new MainPage(page);
     }
 }
