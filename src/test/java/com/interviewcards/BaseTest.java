@@ -6,6 +6,8 @@ import org.junit.jupiter.api.*;
 import pages.LoginPage;
 import pages.MainPage;
 
+import java.nio.file.Path;
+
 /**
  * Base test class for Playwright tests.
  * Handles browser setup and teardown with better error handling.
@@ -33,13 +35,26 @@ public abstract class BaseTest {
     }
 
     @BeforeEach
-    void beforeEach() {
+    void setupContext() {
         context = browser.newContext();
+        context.tracing().start(
+                new Tracing.StartOptions()
+                        .setScreenshots(true)
+                        .setSnapshots(true)
+                        .setSources(true)
+        );
         page = context.newPage();
     }
 
     @AfterEach
-    void afterEach() {
+    void tearDown(TestInfo testInfo) {
+        context.tracing().stop(
+                new Tracing.StopOptions()
+                        .setPath(
+                                Path.of("target/traces/" +
+                                        testInfo.getDisplayName() + ".zip")
+                        )
+        );
         context.close();
     }
 
