@@ -1,8 +1,10 @@
 package com.interviewcards;
 
 import com.microsoft.playwright.*;
+import components.ModalComponent;
 import org.junit.jupiter.api.*;
 import pages.LoginPage;
+import pages.MainPage;
 
 /**
  * Base test class for Playwright tests.
@@ -16,6 +18,9 @@ public abstract class BaseTest {
 
     protected BrowserContext context;
     protected Page page;
+    protected MainPage mainPage;
+    protected LoginPage loginPage;
+    protected ModalComponent modalComponent;
 
     @BeforeAll
     static void beforeAll() {
