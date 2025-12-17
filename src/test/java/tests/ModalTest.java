@@ -7,9 +7,13 @@ import org.junit.jupiter.api.*;
 import pages.LoginPage;
 import pages.MainPage;
 import assertions.ModalAssertions;
+import io.qameta.allure.*;
 
 public class ModalTest extends BaseTest {
 
+    @Epic("Cards")
+    @Feature("Modal")
+    @Story("Open create card modal")
     @Test
     void openModalTest() {
         loginPage = new LoginPage(page);
