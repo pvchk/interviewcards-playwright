@@ -24,6 +24,7 @@
     </properties>
 
     <dependencies>
+
         <!-- Playwright for Java -->
         <dependency>
             <groupId>com.microsoft.playwright</groupId>
@@ -31,33 +32,22 @@
             <version>${playwright.version}</version>
         </dependency>
 
-        <!-- JUnit 5 -->
+        <!-- JUnit 5 (API + Engine + Params) -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-api</artifactId>
-            <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.junit.jupiter</groupId>
-            <artifactId>junit-jupiter-engine</artifactId>
+            <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
 
-        <!-- AssertJ for fluent assertions -->
+        <!-- AssertJ -->
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>${assertj.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>3.25.3</version>
-            <scope>compile</scope>
-        </dependency>
+
     </dependencies>
 
     <build>
