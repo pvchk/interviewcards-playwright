@@ -3,17 +3,21 @@ package tests;
 import com.interviewcards.BaseTest;
 import components.ModalComponent;
 import config.Config;
+import io.qameta.allure.*;
 import org.junit.jupiter.api.*;
 import pages.LoginPage;
 import pages.MainPage;
 import assertions.ModalAssertions;
-import io.qameta.allure.*;
 
+@Epic("UI Components")
+@Feature("Modal")
 public class ModalTest extends BaseTest {
 
     @Epic("Cards")
     @Feature("Modal")
-    @Story("Open create card modal")
+    @Story("Open add card modal")
+    @Description("Test verifies that the add card modal opens correctly with proper title")
+    @Severity(SeverityLevel.NORMAL)
     @Test
     void openModalTest() {
         loginPage = new LoginPage(page);
