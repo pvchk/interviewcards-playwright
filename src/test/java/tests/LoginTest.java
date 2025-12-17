@@ -2,25 +2,32 @@ package tests;
 
 import com.interviewcards.BaseTest;
 import config.Config;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import pages.LoginPage;
+
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class LoginTest extends BaseTest {
 
-    @Test
-    void loginWithValidEmail() {
+    @ParameterizedTest(name = "Login with identifier: {0}")
+    @MethodSource("validLoginData")
+    void loginWithValidCredentials(String login) {
         loginPage = new LoginPage(page);
-        mainPage = loginPage.login(Config.EMAIL, Config.PASSWORD);
-        assertTrue(mainPage.isLogoutButtonDisplayed());
+        mainPage = loginPage.login(login, Config.PASSWORD);
+
+        assertTrue(
+                mainPage.isLogoutButtonDisplayed(),
+                "Logout button should be visible after successful login"
+        );
     }
 
-    @Test
-    void loginWithValidUsername() {
-        loginPage = new LoginPage(page);
-        mainPage = loginPage.login(Config.USERNAME, Config.PASSWORD);
-        assertTrue(mainPage.isLogoutButtonDisplayed());
+    static Stream<String> validLoginData() {
+        return Stream.of(
+                Config.EMAIL,
+                Config.USERNAME
+        );
     }
-
 }
