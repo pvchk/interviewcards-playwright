@@ -31,7 +31,9 @@ Thumbs.db
 test-results/
 playwright-report/
 playwright/.cache/
+.playwright/
 
 # Logs
 *.log
+*.allure
 

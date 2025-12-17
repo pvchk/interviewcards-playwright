@@ -1,6 +1,6 @@
 # Java Playwright Test Automation Project
 
-A Java-based test automation project using Playwright for browser automation.
+A Java-based test automation project using Playwright for browser automation with Allure reporting.
 
 ## Prerequisites
 
@@ -11,86 +11,99 @@ A Java-based test automation project using Playwright for browser automation.
 
 ### 1. Install Dependencies
 
-First, install Maven dependencies:
-
 ```bash
 mvn clean install
 ```
 
 ### 2. Install Playwright Browsers
 
-After installing dependencies, install the Playwright browsers. Try these methods in order:
+Install Playwright browsers using one of these methods:
 
 **Method 1: Using Maven Exec Plugin (Recommended)**
-```bash
-mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install"
-```
-
-**Method 2: Using Maven Exec Plugin (Alternative)**
-```bash
-mvn exec:java -e -D exec.mainClass=com.microsoft.playwright.CLI -D exec.args="install"
-```
-
-**Method 3: Using Node.js Playwright CLI (if Node.js is installed)**
-```bash
-npx playwright install
-```
-
-**Method 4: Install specific browser only**
 ```bash
 mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install chromium"
 ```
 
-**Check Browser Installation:**
-
-Before running tests, check if browsers are installed:
-
+**Method 2: Using Node.js Playwright CLI (if Node.js is installed)**
 ```bash
-./check-browsers.sh
+npx playwright install chromium
 ```
 
-**Troubleshooting Browser Download Issues:**
+**Troubleshooting Browser Installation:**
 
-If you encounter errors when downloading or using browsers:
+- **Timeout Error**: Ensure stable internet connection and try again
+- **400 Error**: Clear Maven cache: `rm -rf ~/.m2/repository/com/microsoft/playwright` then reinstall
+- **Executable doesn't exist**: Browsers are not installed. Use one of the installation methods above
 
-1. **Timeout Error (Request timed out after 30000ms):**
-   - The browser download is timing out. You need to install browsers BEFORE running tests
-   - Run: `mvn exec:java -e -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install chromium"`
-   - Or use: `./install-browsers.sh`
+### 3. Configure Environment Variables
 
-2. **400 Error (server returned code 400):**
-   - CDN issue or outdated Playwright version
-   - Clear Maven cache: `rm -rf ~/.m2/repository/com/microsoft/playwright`
-   - Reinstall: `mvn clean install` then install browsers again
+Tests require `TEST_USERNAME` and `TEST_PASSWORD` environment variables. You can set them in two ways:
 
-3. **Executable doesn't exist Error:**
-   - Browsers are not installed. Install them using the methods above.
+**Option 1: Export in current session**
+```bash
+export TEST_USERNAME="your_username"
+export TEST_PASSWORD="your_password"
+export TEST_EMAIL="your_email@example.com"
+```
 
-4. **General Troubleshooting:**
-   - Ensure you have a stable internet connection
-   - Check firewall/proxy settings that might block downloads
-   - Try again later if CDN is temporarily unavailable
-   - Use the installation script which includes retry logic: `./install-browsers.sh`
+**Option 2: Use system properties (no export needed)**
+```bash
+mvn test -DTEST_USERNAME="your_username" -DTEST_PASSWORD="your_password" -DTEST_EMAIL="your_email@example.com"
+```
 
-### 3. Run Tests
+**Option 3: Add to `~/.zshrc` for permanent setup**
+```bash
+echo 'export TEST_USERNAME="your_username"' >> ~/.zshrc
+echo 'export TEST_PASSWORD="your_password"' >> ~/.zshrc
+echo 'export TEST_EMAIL="your_email@example.com"' >> ~/.zshrc
+source ~/.zshrc
+```
 
-Run all tests:
+## Running Tests
 
+### Run All Tests
 ```bash
 mvn test
 ```
 
-Run a specific test class:
-
+### Run Specific Test Class
 ```bash
-mvn test -Dtest=ExampleTest
+mvn test -Dtest=LoginTest
 ```
 
-### 4. Run Tests with Options
+### Clean and Run
+```bash
+mvn clean test
+```
 
-Run tests in headed mode (see the browser):
+## Allure Reporting
 
-The example test already runs in headed mode (`setHeadless(false)`). To run in headless mode, modify the test or add a system property.
+This project uses Allure for test reporting with automatic screenshot capture on failures.
+
+### Generate and View Reports
+
+**Generate report:**
+```bash
+mvn allure:report
+```
+
+**Serve report (opens in browser automatically):**
+```bash
+mvn allure:serve
+```
+
+The report includes:
+- Test execution results with pass/fail status
+- **Automatic screenshots** captured on test failures
+- Test steps, descriptions, and metadata
+- Test history and trends
+- Interactive HTML interface
+
+### Features
+
+- **Automatic Screenshot Capture**: Screenshots are automatically captured and attached when tests fail
+- **Test Annotations**: Tests use `@Epic`, `@Feature`, `@Story`, `@Severity` for better organization
+- **Default Timeout**: Tests use 5-second timeout for actions and navigation (configurable in `BaseTest`)
 
 ## Project Structure
 
@@ -100,83 +113,19 @@ The example test already runs in headed mode (`setHeadless(false)`). To run in h
 ├── src/
 │   ├── main/
 │   │   └── java/
-│   │       └── com/
-│   │           └── interviewcards/           # Main source code
+│   │       ├── config/                        # Configuration (credentials, URLs)
+│   │       ├── pages/                         # Page Object Model classes
+│   │       └── components/                    # Reusable UI components
 │   └── test/
 │       ├── java/
-│       │   └── com/
-│       │       └── interviewcards/           # Test classes
-│       └── resources/                         # Test resources (configs, etc.)
+│       │   └── com/interviewcards/           # Base test class
+│       │   └── tests/                         # Test classes
+│       └── resources/                         # Test resources
 └── README.md
-```
-
-## Dependencies
-
-- **Playwright**: 1.48.0 - Browser automation framework
-- **JUnit 5**: 5.10.2 - Testing framework
-
-## Configuration
-
-### Browser Selection
-
-By default, the tests use Chromium. To use other browsers, modify the test setup:
-
-```java
-// Firefox
-browser = playwright.firefox().launch(options);
-
-// WebKit
-browser = playwright.webkit().launch(options);
-```
-
-### Headless Mode
-
-To run tests in headless mode, change:
-
-```java
-browser = playwright.chromium().launch(new BrowserType.LaunchOptions().setHeadless(true));
-```
-
-## Writing Tests
-
-The project includes a `BaseTest` class that handles browser setup and teardown automatically.
-
-### Using BaseTest (Recommended)
-
-1. Create a new test class in `src/test/java/com/interviewcards/`
-2. Extend `BaseTest` class
-3. Use `getPage()` method to access the Playwright Page instance
-4. The browser will be automatically set up and torn down
-
-Example:
-
-```java
-public class MyTest extends BaseTest {
-    @Test
-    void myTest() {
-        getPage().navigate("https://example.com");
-        getPage().click("button");
-        String text = getPage().locator(".result").textContent();
-        assertEquals("Expected text", text);
-    }
-}
-```
-
-### Benefits of BaseTest
-
-- **Automatic browser management**: Browser is launched once and shared across tests
-- **Better error messages**: Clear instructions if browsers are not installed
-- **Error handling**: Handles timeout and download errors gracefully
-- **Configurable**: Use system property `-Dheadless=true` to run in headless mode
-
-### Running Tests in Headless Mode
-
-```bash
-mvn test -Dheadless=true
 ```
 
 ## Resources
 
 - [Playwright Java Documentation](https://playwright.dev/java/)
 - [Playwright API Reference](https://playwright.dev/java/docs/api/class-playwright)
-
+- [Allure Framework](https://docs.qameta.io/allure/)
