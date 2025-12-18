@@ -83,7 +83,11 @@ public class BaseTest {
 
     @AfterAll
     static void afterAll() {
-        browser.close();
-        playwright.close();
+        if (browser != null) {
+            browser.close();
+        }
+        if (playwright != null) {
+            playwright.close();
+        }
     }
 }
