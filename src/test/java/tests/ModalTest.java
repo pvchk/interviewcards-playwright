@@ -8,6 +8,7 @@ import org.junit.jupiter.api.*;
 import pages.LoginPage;
 import pages.MainPage;
 import assertions.ModalAssertions;
+import pages.enums.LoginSubmitType;
 
 @Epic("UI Components")
 @Feature("Modal")
@@ -20,16 +21,16 @@ public class ModalTest extends BaseTest {
     @Severity(SeverityLevel.NORMAL)
     @Test
     void openModalTest() {
-        loginPage = new LoginPage(page);
-        loginPage.login(Config.EMAIL, Config.PASSWORD);
 
-        mainPage = new MainPage(page);
-        mainPage.open();
+        // login
+        mainPage = new LoginPage(page)
+                .login(Config.EMAIL, Config.PASSWORD, LoginSubmitType.CLICK);
 
+        // open modal
         modalComponent = mainPage.clickAddCard();
 
-        ModalComponent modal = new ModalComponent(page);
-        ModalAssertions modalAssert = new ModalAssertions(modal);
+        // assertions
+        ModalAssertions modalAssert = new ModalAssertions(modalComponent);
 
         modalAssert.beVisible();
         modalAssert.haveTitle(modalComponent.getModalTitle());
