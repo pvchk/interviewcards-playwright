@@ -4,8 +4,10 @@ import com.interviewcards.BaseTest;
 import config.Config;
 import io.qameta.allure.*;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import pages.LoginPage;
+import pages.enums.LoginSubmitType;
 
 import java.util.stream.Stream;
 
@@ -21,11 +23,11 @@ public class LoginTest extends BaseTest {
     @Feature("Successful login")
     @Story("User logs in with valid credentials")
     @Description("Test verifies that user can successfully login using email or username")
+    @ParameterizedTest(name = "Login with {0} using {1}")
     @MethodSource("validLoginData")
-    @ParameterizedTest(name = "Login with identifier: {0}")
-    void loginWithValidCredentials(String login) {
+    void loginWithValidCredentials(String login, LoginSubmitType submitType) {
         loginPage = new LoginPage(page);
-        mainPage = loginPage.login(login, Config.PASSWORD);
+        mainPage = loginPage.login(login, Config.PASSWORD, submitType);
 
         assertTrue(
                 mainPage.isLogoutButtonDisplayed(),
@@ -33,10 +35,12 @@ public class LoginTest extends BaseTest {
         );
     }
 
-    static Stream<String> validLoginData() {
+    static Stream<Arguments> validLoginData() {
         return Stream.of(
-                Config.EMAIL,
-                Config.USERNAME
+                Arguments.of(Config.EMAIL, LoginSubmitType.CLICK),
+                Arguments.of(Config.EMAIL, LoginSubmitType.ENTER),
+                Arguments.of(Config.USERNAME, LoginSubmitType.CLICK),
+                Arguments.of(Config.USERNAME, LoginSubmitType.ENTER)
         );
     }
 }
