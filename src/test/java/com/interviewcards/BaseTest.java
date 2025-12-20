@@ -61,10 +61,15 @@ public class BaseTest {
     static void beforeAll() {
         playwright = Playwright.create();
 
+        // Default to headless mode for CI environments (Jenkins)
+        // Can be overridden with -Dheadless=false for local debugging
+        String headlessProperty = System.getProperty("headless", 
+            System.getenv().getOrDefault("HEADLESS", "true"));
+        boolean headless = Boolean.parseBoolean(headlessProperty);
+
         browser = playwright.chromium().launch(
                 new BrowserType.LaunchOptions()
-                        .setChannel("chrome")
-                        .setHeadless(false)
+                        .setHeadless(headless)
         );
     }
 
