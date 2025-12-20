@@ -14,6 +14,7 @@ public class LoginPage {
     private static final String SUBMIT_BUTTON = "button[type='submit']";
     private static final String INVALID_USERNAME_OR_PASSWORD_DIV = "//div[@class='error-message']";
     public static final String INVALID_USERNAME_OR_PASSWORD_HINT = "Invalid username or password. Please try again.";
+    public static final String EMPTY_USERNAME_OR_PASSWORD_HINT = "Username or email is required";
 
     public LoginPage(Page page) {
         this.page = page;
@@ -60,6 +61,14 @@ public class LoginPage {
         page.fill(PASSWORD_INPUT, password);
 
         page.locator(SUBMIT_BUTTON).click();
+        return this;
+    }
+
+    public LoginPage loginWithEmptyEmail(String password) {
+        open();
+        page.fill(PASSWORD_INPUT, password);
+        page.locator(SUBMIT_BUTTON).click();
+
         return this;
     }
 
