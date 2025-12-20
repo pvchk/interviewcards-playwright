@@ -18,8 +18,7 @@ import static io.qameta.allure.SeverityLevel.CRITICAL;
 import static io.qameta.allure.SeverityLevel.NORMAL;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static pages.LoginPage.EMPTY_USERNAME_OR_PASSWORD_HINT;
-import static pages.LoginPage.INVALID_USERNAME_OR_PASSWORD_HINT;
+import static pages.LoginPage.*;
 
 @Epic("Authentication")
 @Feature("Login")
@@ -78,7 +77,31 @@ public class LoginTest extends BaseTest {
         );
 
         assertEquals(
-                EMPTY_USERNAME_OR_PASSWORD_HINT,
+                EMPTY_USERNAME_HINT,
+                loginPage.getInvalidUsernameOrPasswordHint(),
+                "Server-side error message should match expected hint for empty username"
+        );
+    }
+
+    @Test
+    @Epic("Login")
+    @Feature("Form Validation")
+    @Story("Empty field validation")
+    @Severity(NORMAL)
+    @DisplayName("Login with empty password should show server error")
+    @Description("Test verifies that submitting login form with empty password field triggers server-side validation error")
+    void loginWithEmptyPassword() {
+        loginPage = new LoginPage(page);
+        loginPage = loginPage.loginWithEmptyEmail(PASSWORD);
+        loginPage = loginPage.loginWithEmptyPassword(USERNAME);
+
+        assertTrue(
+                page.url().contains("/login"),
+                "Should remain on login page after validation error"
+        );
+
+        assertEquals(
+                EMPTY_PASSWORD_HINT,
                 loginPage.getInvalidUsernameOrPasswordHint(),
                 "Server-side error message should match expected hint for empty username"
         );
