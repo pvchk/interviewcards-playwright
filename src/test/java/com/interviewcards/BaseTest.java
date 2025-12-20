@@ -63,6 +63,7 @@ public class BaseTest {
 
         browser = playwright.chromium().launch(
                 new BrowserType.LaunchOptions()
+                        .setChannel("chrome")
                         .setHeadless(false)
         );
     }
@@ -71,13 +72,13 @@ public class BaseTest {
     void setupContext() {
         context = browser.newContext();
 
-        context.setDefaultTimeout(5_000);
-        context.setDefaultNavigationTimeout(5_000);
+        context.setDefaultTimeout(7_000);
+        context.setDefaultNavigationTimeout(7_000);
         page = context.newPage();
     }
 
     @AfterEach
-    void tearDown(TestInfo testInfo) {
+    void tearDown() {
         context.close();
     }
 

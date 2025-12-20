@@ -13,9 +13,7 @@ public class MainPage {
 
     private final Page page;
 
-    private final String logoutButton = "//button[normalize-space()='Logout']";
-
-    public static final String INVALID_USERNAME_PASSWORD = "Invalid username or password. Please try again.";
+    private static final String logoutButton = "//button[normalize-space()='Logout']";
 
     public MainPage(Page page) {
         this.page = page;
@@ -30,10 +28,6 @@ public class MainPage {
                 .waitFor(new Locator.WaitForOptions().setState(WaitForSelectorState.VISIBLE));
 
         page.getByRole(AriaRole.BUTTON, new Page.GetByRoleOptions().setName("+ New Card")).click();
-        return new ModalComponent(page);
-    }
-
-    public ModalComponent modal() {
         return new ModalComponent(page);
     }
 
