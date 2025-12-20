@@ -14,6 +14,12 @@ public class Config {
     public static final String EMAIL =
             System.getenv("TEST_EMAIL");
 
+    public static final String EMAIL_WHITESPACES =
+            " " + System.getenv("TEST_EMAIL") + " ";
+
+    public static final String USERNAME_WHITESPACES =
+            " " + System.getenv("TEST_USERNAME") + " ";
+
     public static final String EMAIL_INVALID_FORMAT = "user@";
 
     static {

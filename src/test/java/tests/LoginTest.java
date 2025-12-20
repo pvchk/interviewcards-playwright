@@ -63,6 +63,10 @@ public class LoginTest extends BaseTest {
 
     static Stream<Arguments> validLoginData() {
         return Stream.of(
+                Arguments.of(Config.EMAIL_WHITESPACES, LoginSubmitType.ENTER),
+                Arguments.of(Config.EMAIL_WHITESPACES, LoginSubmitType.CLICK),
+                Arguments.of(Config.USERNAME_WHITESPACES, LoginSubmitType.ENTER),
+                Arguments.of(Config.USERNAME_WHITESPACES, LoginSubmitType.CLICK),
                 Arguments.of(Config.EMAIL, LoginSubmitType.CLICK),
                 Arguments.of(Config.EMAIL, LoginSubmitType.ENTER),
                 Arguments.of(Config.USERNAME, LoginSubmitType.CLICK),
