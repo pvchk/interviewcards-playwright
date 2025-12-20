@@ -5,12 +5,15 @@ import com.microsoft.playwright.options.AriaRole;
 import config.Config;
 import pages.enums.LoginSubmitType;
 
-import static pages.locators.LoginPageLocators.*;
-
 public class LoginPage {
 
     private final Page page;
     public static final String LOGIN_URL = "/login";
+    private static final String PASSWORD_INPUT = "#password";
+    private static final String USERNAME_INPUT = "#username";
+    private static final String SUBMIT_BUTTON = "button[type='submit']";
+    private static final String INVALID_USERNAME_OR_PASSWORD_DIV = "//div[@class='error-message']";
+    public static final String INVALID_USERNAME_OR_PASSWORD_HINT = "Invalid username or password. Please try again.";
 
     public LoginPage(Page page) {
         this.page = page;
@@ -33,6 +36,7 @@ public class LoginPage {
         return new MainPage(page);
     }
 
+
     private void submit(LoginSubmitType submitType) {
         switch (submitType) {
             case CLICK ->
@@ -47,5 +51,19 @@ public class LoginPage {
                 AriaRole.BUTTON,
                 new Page.GetByRoleOptions().setName("+ New Card")
         ).waitFor();
+    }
+
+    public LoginPage loginWithInvalidEmailFormat(String invalidEmailFormat, String password) {
+        open();
+
+        page.fill(USERNAME_INPUT, invalidEmailFormat);
+        page.fill(PASSWORD_INPUT, password);
+
+        page.locator(SUBMIT_BUTTON).click();
+        return this;
+    }
+
+    public String getInvalidUsernameOrPasswordHint() {
+        return page.locator(INVALID_USERNAME_OR_PASSWORD_DIV).textContent();
     }
 }
