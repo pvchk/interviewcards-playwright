@@ -112,6 +112,30 @@ public class LoginTest extends BaseTest {
     @Feature("Form Validation")
     @Story("Empty field validation")
     @Severity(NORMAL)
+    @DisplayName("Login with invalid password should show server error")
+    @Description("Test verifies that submitting login form with invalid password field triggers server-side validation error")
+    void loginWithIncorrectPassword() {
+        loginPage = new LoginPage(page);
+        loginPage = loginPage.loginWithIncorrectPassword(USERNAME, "wrong_password");
+
+        assertTrue(
+                page.url().contains("/login"),
+                "Should remain on login page after validation error"
+        );
+
+        assertEquals(
+                INVALID_USERNAME_OR_PASSWORD_HINT,
+                loginPage.getInvalidEmailOrPasswordHint(),
+                "Server-side error message should match expected hint for empty username"
+        );
+
+    }
+
+    @Test
+    @Epic("Login")
+    @Feature("Form Validation")
+    @Story("Empty field validation")
+    @Severity(NORMAL)
     @DisplayName("Login with empty login and password should show server error")
     @Description("Test verifies that submitting login form with empty login and empty password field triggers server-side validation error")
     void loginWithEmptyLoginAndPassword() {
