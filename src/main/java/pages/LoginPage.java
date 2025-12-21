@@ -83,6 +83,15 @@ public class LoginPage {
         return this;
     }
 
+    public LoginPage loginWithIncorrectPassword(String login,String wrongPassword) {
+        open();
+        page.fill(USERNAME_INPUT, login);
+        page.fill(PASSWORD_INPUT, wrongPassword);
+        page.locator(SUBMIT_BUTTON).click();
+
+        return this;
+    }
+
     public LoginPage loginWithEmptyLoginAndPassword() {
         open();
         page.locator(SUBMIT_BUTTON).click();
