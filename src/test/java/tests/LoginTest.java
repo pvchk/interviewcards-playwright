@@ -1,7 +1,6 @@
 package tests;
 
 import com.interviewcards.BaseTest;
-import com.microsoft.playwright.Locator;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
 import config.Config;
@@ -19,7 +18,6 @@ import java.util.stream.Stream;
 import static config.Config.*;
 import static io.qameta.allure.SeverityLevel.CRITICAL;
 import static io.qameta.allure.SeverityLevel.NORMAL;
-import static org.assertj.core.api.Fail.fail;
 import static org.junit.jupiter.api.Assertions.*;
 import static pages.LoginPage.*;
 
@@ -191,9 +189,9 @@ public class LoginTest extends BaseTest {
     @Severity(CRITICAL)
     @DisplayName("Login with SQL Injection attempt should be rejected")
     @Description("Test verifies that SQL Injection attempts in login credentials are properly rejected")
-    void loginWithSQLInjection_ShouldBeRejected() {
+    void loginWithSQLInjectionShouldBeRejected() {
         loginPage = new LoginPage(page);
-        loginPage = loginPage.loginWithSQLInjectionLoginAndPassword("' OR '1'='1", "' OR '1'='1' --");
+        loginPage = loginPage.loginWithInjectionLoginAndPassword("' OR '1'='1", "' OR '1'='1' --");
 
         page.waitForSelector("//div[@id='login-error-message']",
                 new Page.WaitForSelectorOptions().setTimeout(3000));
@@ -201,6 +199,43 @@ public class LoginTest extends BaseTest {
         assertTrue(
                 page.url().contains("/login"),
                 "SQL injection attempt should be rejected - user should remain on login page"
+        );
+
+        assertEquals(
+                INVALID_USERNAME_OR_PASSWORD_HINT,
+                loginPage.getInvalidEmailOrPasswordHint(),
+                "Error message should indicate invalid credentials (SQL injection rejected)"
+        );
+
+        assertTrue(
+                page.url().contains("/login"),
+                "Should remain on login page after validation error"
+        );
+
+        assertFalse(
+                page.getByRole(AriaRole.BUTTON,
+                        new Page.GetByRoleOptions().setName("Logout")).isVisible(),
+                "User should not be logged in after SQL injection attempt"
+        );
+    }
+
+    @Test
+    @Epic("Login")
+    @Feature("Security")
+    @Story("SQL Injection prevention")
+    @Severity(CRITICAL)
+    @DisplayName("Login with XSS Injection attempt should be rejected")
+    @Description("Test verifies that XSS Injection attempts in login credentials are properly rejected")
+    void loginWithXSSInjectionShouldBeRejected() {
+        loginPage = new LoginPage(page);
+        loginPage = loginPage.loginWithInjectionLoginAndPassword("<script>alert('x')</script>", "<script>alert('x')</script>");
+
+        page.waitForSelector("//div[@id='login-error-message']",
+                new Page.WaitForSelectorOptions().setTimeout(3000));
+
+        assertTrue(
+                page.url().contains("/login"),
+                "XSS injection attempt should be rejected - user should remain on login page"
         );
 
         assertEquals(
