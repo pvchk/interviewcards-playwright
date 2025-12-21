@@ -109,6 +109,16 @@ public class LoginPage {
         return this;
     }
 
+    public LoginPage loginWithSQLInjectionLoginAndPassword(String sqlInjectionLogin, String sqlInjectionPassword) {
+        open();
+        page.fill(USERNAME_INPUT, sqlInjectionLogin);
+        page.fill(PASSWORD_INPUT, sqlInjectionPassword);
+        page.locator(SUBMIT_BUTTON).click();
+        page.locator(SUBMIT_BUTTON).click();
+
+        return this;
+    }
+
     public String getInvalidUsernameHint() {
         return page.locator(INVALID_USERNAME_DIV).textContent();
     }
