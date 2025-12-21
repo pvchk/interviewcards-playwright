@@ -161,6 +161,31 @@ public class LoginTest extends BaseTest {
 
     }
 
+    @Test
+    @Epic("Login")
+    @Feature("Form Validation")
+    @Story("Empty field validation")
+    @Severity(NORMAL)
+    @DisplayName("Login with Non Existent login and password should show server error")
+    @Description("Test verifies that submitting login form with Non Existent login and empty password field triggers server-side validation error")
+    void loginWithNonExistentLogin() {
+        loginPage = new LoginPage(page);
+        loginPage = loginPage.loginWithNonExistentLoginAndPassword("NonExistentUser", "NonExistentPassword");
+
+        assertTrue(
+                page.url().contains("/login"),
+                "Should remain on login page after validation error"
+        );
+
+        assertTrue(page.url().contains("/login"), "Should remain on login page");
+        assertEquals(
+                INVALID_USERNAME_OR_PASSWORD_HINT,
+                loginPage.getInvalidEmailOrPasswordHint(),
+                "Server-side error message should match expected hint for empty username"
+        );
+
+    }
+
     static Stream<Arguments> validLoginData() {
         return Stream.of(
                 Arguments.of(Config.EMAIL_WHITESPACES, LoginSubmitType.ENTER),

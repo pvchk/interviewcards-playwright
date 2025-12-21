@@ -99,6 +99,16 @@ public class LoginPage {
         return this;
     }
 
+    public LoginPage loginWithNonExistentLoginAndPassword(String nonExistentLogin, String nonExistentPassword) {
+        open();
+        page.fill(USERNAME_INPUT, nonExistentLogin);
+        page.fill(PASSWORD_INPUT, nonExistentPassword);
+        page.locator(SUBMIT_BUTTON).click();
+        page.locator(SUBMIT_BUTTON).click();
+
+        return this;
+    }
+
     public String getInvalidUsernameHint() {
         return page.locator(INVALID_USERNAME_DIV).textContent();
     }
