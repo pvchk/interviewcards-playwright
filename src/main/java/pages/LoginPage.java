@@ -109,10 +109,10 @@ public class LoginPage {
         return this;
     }
 
-    public LoginPage loginWithSQLInjectionLoginAndPassword(String sqlInjectionLogin, String sqlInjectionPassword) {
+    public LoginPage loginWithInjectionLoginAndPassword(String injectionLogin, String injectionPassword) {
         open();
-        page.fill(USERNAME_INPUT, sqlInjectionLogin);
-        page.fill(PASSWORD_INPUT, sqlInjectionPassword);
+        page.fill(USERNAME_INPUT, injectionLogin);
+        page.fill(PASSWORD_INPUT, injectionPassword);
         page.locator(SUBMIT_BUTTON).click();
         page.locator(SUBMIT_BUTTON).click();
 
