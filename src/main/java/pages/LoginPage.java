@@ -12,7 +12,9 @@ public class LoginPage {
     private static final String PASSWORD_INPUT = "#password";
     private static final String USERNAME_INPUT = "#username";
     private static final String SUBMIT_BUTTON = "button[type='submit']";
-    private static final String INVALID_USERNAME_OR_PASSWORD_DIV = "//div[@class='error-message']";
+    private static final String INVALID_USERNAME_DIV = "//div[@id='username-error-message']";
+    private static final String INVALID_PASSWORD_DIV = "//div[@id='password-error-message']";
+    private static final String INVALID_USERNAME_PASSWORD_DIV = "//div[@id='login-error-message']";
     public static final String INVALID_USERNAME_OR_PASSWORD_HINT = "Invalid username or password. Please try again.";
     public static final String EMPTY_USERNAME_HINT = "Username or email is required";
     public static final String EMPTY_PASSWORD_HINT = "Password is required";
@@ -81,7 +83,21 @@ public class LoginPage {
         return this;
     }
 
-    public String getInvalidUsernameOrPasswordHint() {
-        return page.locator(INVALID_USERNAME_OR_PASSWORD_DIV).textContent();
+    public LoginPage loginWithEmptyLoginAndPassword() {
+        open();
+        page.locator(SUBMIT_BUTTON).click();
+
+        return this;
+    }
+
+    public String getInvalidUsernameHint() {
+        return page.locator(INVALID_USERNAME_DIV).textContent();
+    }
+
+    public String getInvalidPasswordHint() {
+        return page.locator(INVALID_PASSWORD_DIV).textContent();
+    }
+    public String getInvalidEmailOrPasswordHint() {
+        return page.locator(INVALID_USERNAME_PASSWORD_DIV).textContent();
     }
 }

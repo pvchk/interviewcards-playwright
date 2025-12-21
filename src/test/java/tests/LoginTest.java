@@ -48,15 +48,15 @@ public class LoginTest extends BaseTest {
     @Severity(NORMAL)
     @DisplayName("Login with invalid email format should show server error")
     @Description("Test verifies that entering invalid email format (user@) triggers server-side validation error")
-    void loginWithInvalidEmailFormat_ShouldShowServerError() {
+    void loginWithInvalidEmailFormatShouldShowServerError() {
         loginPage = new LoginPage(page);
         loginPage = loginPage.loginWithInvalidEmailFormat(EMAIL_INVALID_FORMAT, PASSWORD);
 
         assertTrue(page.url().contains("/login"), "Should remain on login page");
         assertEquals(
                 INVALID_USERNAME_OR_PASSWORD_HINT,
-                loginPage.getInvalidUsernameOrPasswordHint(),
-                "Server-side error message should be displayed"
+                loginPage.getInvalidEmailOrPasswordHint(),
+                "Server-side error message should match expected hint for empty username"
         );
     }
 
@@ -78,7 +78,7 @@ public class LoginTest extends BaseTest {
 
         assertEquals(
                 EMPTY_USERNAME_HINT,
-                loginPage.getInvalidUsernameOrPasswordHint(),
+                loginPage.getInvalidUsernameHint(),
                 "Server-side error message should match expected hint for empty username"
         );
     }
@@ -92,7 +92,6 @@ public class LoginTest extends BaseTest {
     @Description("Test verifies that submitting login form with empty password field triggers server-side validation error")
     void loginWithEmptyPassword() {
         loginPage = new LoginPage(page);
-        loginPage = loginPage.loginWithEmptyEmail(PASSWORD);
         loginPage = loginPage.loginWithEmptyPassword(USERNAME);
 
         assertTrue(
@@ -102,7 +101,37 @@ public class LoginTest extends BaseTest {
 
         assertEquals(
                 EMPTY_PASSWORD_HINT,
-                loginPage.getInvalidUsernameOrPasswordHint(),
+                loginPage.getInvalidPasswordHint(),
+                "Server-side error message should match expected hint for empty username"
+        );
+
+    }
+
+    @Test
+    @Epic("Login")
+    @Feature("Form Validation")
+    @Story("Empty field validation")
+    @Severity(NORMAL)
+    @DisplayName("Login with empty login and password should show server error")
+    @Description("Test verifies that submitting login form with empty login and empty password field triggers server-side validation error")
+    void loginWithEmptyLoginAndPassword() {
+        loginPage = new LoginPage(page);
+        loginPage = loginPage.loginWithEmptyLoginAndPassword();
+
+        assertTrue(
+                page.url().contains("/login"),
+                "Should remain on login page after validation error"
+        );
+
+        assertEquals(
+                EMPTY_PASSWORD_HINT,
+                loginPage.getInvalidPasswordHint(),
+                "Server-side error message should match expected hint for empty username"
+        );
+
+        assertEquals(
+                EMPTY_USERNAME_HINT,
+                loginPage.getInvalidUsernameHint(),
                 "Server-side error message should match expected hint for empty username"
         );
 
