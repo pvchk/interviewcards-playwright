@@ -44,6 +44,22 @@ public class LoginTest extends BaseTest {
 
     @Test
     @Epic("Login")
+    @Severity(CRITICAL)
+    @Feature("Successful login")
+    @Story("User logs in with Leading/Trailing Spaces")
+    @Description("Test verifies that user can successfully login with Leading/Trailing Spaces in password")
+    void loginWithPasswordLeadingTrailingSpaces() {
+        loginPage = new LoginPage(page);
+        mainPage = loginPage.login(EMAIL, " " + PASSWORD + " ", LoginSubmitType.CLICK);
+
+        assertTrue(
+                mainPage.isLogoutButtonDisplayed(),
+                "Logout button should be visible after successful login"
+        );
+    }
+
+    @Test
+    @Epic("Login")
     @Feature("Form Validation")
     @Story("Server-side email validation")
     @Severity(NORMAL)
