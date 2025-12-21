@@ -83,8 +83,27 @@ public class LoginPage {
         return this;
     }
 
+    public LoginPage loginWithIncorrectPassword(String login,String wrongPassword) {
+        open();
+        page.fill(USERNAME_INPUT, login);
+        page.fill(PASSWORD_INPUT, wrongPassword);
+        page.locator(SUBMIT_BUTTON).click();
+
+        return this;
+    }
+
     public LoginPage loginWithEmptyLoginAndPassword() {
         open();
+        page.locator(SUBMIT_BUTTON).click();
+
+        return this;
+    }
+
+    public LoginPage loginWithNonExistentLoginAndPassword(String nonExistentLogin, String nonExistentPassword) {
+        open();
+        page.fill(USERNAME_INPUT, nonExistentLogin);
+        page.fill(PASSWORD_INPUT, nonExistentPassword);
+        page.locator(SUBMIT_BUTTON).click();
         page.locator(SUBMIT_BUTTON).click();
 
         return this;
