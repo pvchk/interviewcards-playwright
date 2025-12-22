@@ -41,21 +41,21 @@ Tests require `TEST_USERNAME` and `TEST_PASSWORD` environment variables. You can
 
 **Option 1: Export in current session**
 ```bash
-export TEST_USERNAME="test1"
-export TEST_PASSWORD="test123"
-export TEST_EMAIL="test1@test1.test1"
+export TEST_USERNAME="your_username"
+export TEST_PASSWORD="your_password"
+export TEST_EMAIL="your_email@example.com"
 ```
 
 **Option 2: Use system properties (no export needed)**
 ```bash
-mvn test -DTEST_USERNAME="test1" -DTEST_PASSWORD="test123" -DTEST_EMAIL="test1@test1.test1"
+mvn test -DTEST_USERNAME="your_username" -DTEST_PASSWORD="your_password" -DTEST_EMAIL="your_email@example.com"
 ```
 
 **Option 3: Add to `~/.zshrc` for permanent setup**
 ```bash
-echo 'export TEST_USERNAME="test1"' >> ~/.zshrc
-echo 'export TEST_PASSWORD="test123"' >> ~/.zshrc
-echo 'export TEST_EMAIL="test1@test1.test1"' >> ~/.zshrc
+echo 'export TEST_USERNAME="your_username"' >> ~/.zshrc
+echo 'export TEST_PASSWORD="your_password"' >> ~/.zshrc
+echo 'export TEST_EMAIL="your_email@example.com"' >> ~/.zshrc
 source ~/.zshrc
 ```
 
