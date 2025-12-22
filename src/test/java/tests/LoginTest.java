@@ -272,6 +272,9 @@ public class LoginTest extends BaseTest {
                 loginPage.getLockedUserHint(),
                 "Error message should indicate account is locked"
         );
+
+        TestUserHelper.deleteUser(testUser);
+
     }
 
     @Test

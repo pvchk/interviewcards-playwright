@@ -144,5 +144,110 @@ public class TestUserHelper {
             return null;
         }
     }
+
+    /**
+     * Deletes a test user via the API using curl.
+     *
+     * @param username the username of the user to delete
+     */
+    public static void deleteUser(String username) {
+        if (username == null || username.isEmpty()) {
+            System.err.println("⚠️ Cannot delete user: username is null or empty");
+            return;
+        }
+
+        try {
+            // Try to find a delete script first (if it exists)
+            File scriptFile = new File("delete-test-user.sh");
+            if (!scriptFile.exists()) {
+                String workspacePath = System.getProperty("user.dir");
+                scriptFile = new File(workspacePath, "delete-test-user.sh");
+            }
+
+            if (scriptFile.exists() && scriptFile.canExecute()) {
+                ProcessBuilder pb = new ProcessBuilder(
+                    scriptFile.getAbsolutePath(),
+                    username
+                );
+
+                pb.directory(scriptFile.getParentFile());
+
+                Process process = pb.start();
+
+                // Read output
+                BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream())
+                );
+                StringBuilder output = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    output.append(line).append("\n");
+                }
+
+                int exitCode = process.waitFor();
+                if (exitCode == 0) {
+                    System.out.println("✅ User '" + username + "' deleted successfully");
+                    return;
+                } else {
+                    System.err.println("⚠️ Failed to delete user '" + username + "' via script (exit code: " + exitCode + ")");
+                    System.err.println("Output: " + output.toString());
+                    // Fallback to curl
+                }
+            }
+
+            // Fallback: use curl directly
+            deleteUserViaCurl(username);
+        } catch (Exception e) {
+            System.err.println("⚠️ Error deleting user '" + username + "': " + e.getMessage());
+            // Try fallback method
+            deleteUserViaCurl(username);
+        }
+    }
+
+    /**
+     * Deletes a user directly via curl command (fallback method).
+     *
+     * @param username the username of the user to delete
+     */
+    private static void deleteUserViaCurl(String username) {
+        try {
+            String baseUrl = Config.BASE_URL;
+            String jsonPayload = String.format("{\"username\":\"%s\"}", username);
+
+            ProcessBuilder pb = new ProcessBuilder(
+                "curl", "-s", "-X", "DELETE",
+                baseUrl + "/api/auth/delete",
+                "-H", "Content-Type: application/json",
+                "-d", jsonPayload,
+                "-w", "\nHTTP_CODE:%{http_code}"
+            );
+
+            Process process = pb.start();
+
+            BufferedReader reader = new BufferedReader(
+                new InputStreamReader(process.getInputStream())
+            );
+            StringBuilder response = new StringBuilder();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                response.append(line).append("\n");
+            }
+
+            int exitCode = process.waitFor();
+            String responseStr = response.toString();
+
+            // Check HTTP status code - 200 or 204 typically indicate success
+            if (responseStr.contains("HTTP_CODE:200") || responseStr.contains("HTTP_CODE:204")) {
+                System.out.println("✅ User '" + username + "' deleted successfully via API");
+            } else if (responseStr.contains("HTTP_CODE:404")) {
+                System.out.println("ℹ️ User '" + username + "' not found (may have already been deleted)");
+            } else {
+                System.err.println("⚠️ Failed to delete user '" + username + "' (exit code: " + exitCode + ")");
+                System.err.println("Response: " + responseStr);
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ Error deleting user via curl '" + username + "': " + e.getMessage());
+        }
+    }
 }
 
