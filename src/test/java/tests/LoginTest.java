@@ -126,7 +126,7 @@ public class LoginTest extends BaseTest {
     @Feature("Form Validation")
     @Story("Empty field validation")
     @Severity(NORMAL)
-    @DisplayName("L")
+    @DisplayName("Login with invalid password should show server error")
     @Description("Test verifies that submitting login form with invalid password field triggers server-side validation error")
     void loginWithIncorrectPassword() {
         loginPage = new LoginPage(page);
