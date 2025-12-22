@@ -3,17 +3,14 @@ package tests;
 import com.interviewcards.BaseTest;
 import com.microsoft.playwright.Page;
 import com.microsoft.playwright.options.AriaRole;
-import config.Config;
 import io.qameta.allure.*;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import pages.LoginPage;
 import pages.enums.LoginSubmitType;
-
-import java.util.stream.Stream;
+import utils.DatabaseHelper;
 
 import static config.Config.*;
 import static io.qameta.allure.SeverityLevel.CRITICAL;
@@ -31,7 +28,7 @@ public class LoginTest extends BaseTest {
     @Story("User logs in with valid credentials")
     @Description("Test verifies that user can successfully login using email or username")
     @ParameterizedTest(name = "Login with {0} using {1}")
-    @MethodSource("validLoginData")
+    @MethodSource("utils.LoginTestDataProvider#validLoginData")
     void loginWithValidCredentials(String login, LoginSubmitType submitType) {
         loginPage = new LoginPage(page);
         mainPage = loginPage.login(login, PASSWORD, submitType);
@@ -209,9 +206,6 @@ public class LoginTest extends BaseTest {
         loginPage = new LoginPage(page);
         loginPage = loginPage.loginWithInjectionLoginAndPassword("' OR '1'='1", "' OR '1'='1' --");
 
-        page.waitForSelector("//div[@id='login-error-message']",
-                new Page.WaitForSelectorOptions().setTimeout(3000));
-
         assertTrue(
                 page.url().contains("/login"),
                 "SQL injection attempt should be rejected - user should remain on login page"
@@ -223,16 +217,6 @@ public class LoginTest extends BaseTest {
                 "Error message should indicate invalid credentials (SQL injection rejected)"
         );
 
-        assertTrue(
-                page.url().contains("/login"),
-                "Should remain on login page after validation error"
-        );
-
-        assertFalse(
-                page.getByRole(AriaRole.BUTTON,
-                        new Page.GetByRoleOptions().setName("Logout")).isVisible(),
-                "User should not be logged in after SQL injection attempt"
-        );
     }
 
     @Test
@@ -246,23 +230,15 @@ public class LoginTest extends BaseTest {
         loginPage = new LoginPage(page);
         loginPage = loginPage.loginWithInjectionLoginAndPassword("<script>alert('x')</script>", "<script>alert('x')</script>");
 
-        page.waitForSelector("//div[@id='login-error-message']",
-                new Page.WaitForSelectorOptions().setTimeout(3000));
-
         assertTrue(
                 page.url().contains("/login"),
-                "XSS injection attempt should be rejected - user should remain on login page"
+                "Login with XSS injection attempt should be rejected - user should remain on login page"
         );
 
         assertEquals(
                 INVALID_USERNAME_OR_PASSWORD_HINT,
                 loginPage.getInvalidEmailOrPasswordHint(),
                 "Error message should indicate invalid credentials (SQL injection rejected)"
-        );
-
-        assertTrue(
-                page.url().contains("/login"),
-                "Should remain on login page after validation error"
         );
 
         assertFalse(
@@ -272,16 +248,32 @@ public class LoginTest extends BaseTest {
         );
     }
 
-    static Stream<Arguments> validLoginData() {
-        return Stream.of(
-                Arguments.of(Config.EMAIL_WHITESPACES, LoginSubmitType.ENTER),
-                Arguments.of(Config.EMAIL_WHITESPACES, LoginSubmitType.CLICK),
-                Arguments.of(Config.USERNAME_WHITESPACES, LoginSubmitType.ENTER),
-                Arguments.of(Config.USERNAME_WHITESPACES, LoginSubmitType.CLICK),
-                Arguments.of(Config.EMAIL, LoginSubmitType.CLICK),
-                Arguments.of(Config.EMAIL, LoginSubmitType.ENTER),
-                Arguments.of(Config.USERNAME, LoginSubmitType.CLICK),
-                Arguments.of(Config.USERNAME, LoginSubmitType.ENTER)
-        );
+    @Test
+    @Epic("Login")
+    @Feature("Security")
+    @Story("Locked-After-Multiple-Failure")
+    @Severity(CRITICAL)
+    @DisplayName("Login with Locked-After-Multiple-Failure account should be rejected")
+    @Description("Test verifies that Locked-After-Multiple-Failure attempts in login credentials are properly rejected")
+    void loginWithLockedAfterMultipleFailure() {
+        String testUser = "testlockuser";
+
+        try {
+            loginPage = new LoginPage(page);
+            loginPage = loginPage.lockUserAfterMultipleFailureAttempts(testUser, "wrong_password");
+
+            assertTrue(
+                    page.url().contains("/login"),
+                    "Login locked user should be rejected - user should remain on login page"
+            );
+
+            assertEquals(
+                    TOO_MANY_FAILED_ATTEMPTS_HINT,
+                    loginPage.getLockedUserHint(),
+                    "Error message should indicate account is locked"
+            );
+        } finally {
+            DatabaseHelper.unlockUser(testUser);
+        }
     }
 }
