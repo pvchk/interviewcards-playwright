@@ -276,4 +276,28 @@ public class LoginTest extends BaseTest {
             DatabaseHelper.unlockUser(testUser);
         }
     }
+
+    @Test
+    @Epic("Login")
+    @Feature("Session")
+    @Story("Session persistence")
+    @Severity(CRITICAL)
+    @DisplayName("User remains logged in after page refresh")
+    @Description("Verifies that user session persists after browser page refresh")
+    void userRemainsLoggedInAfterRefresh() {
+        loginPage = new LoginPage(page);
+        mainPage = loginPage.login(EMAIL, PASSWORD, LoginSubmitType.CLICK);
+
+        assertTrue(
+                mainPage.isLogoutButtonDisplayed(),
+                "User should be logged in before refresh"
+        );
+
+        page.reload();
+
+        assertTrue(
+                mainPage.isLogoutButtonDisplayed(),
+                "User should remain logged in after page refresh"
+        );
+    }
 }
