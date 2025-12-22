@@ -10,7 +10,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import pages.LoginPage;
 import pages.enums.LoginSubmitType;
-import utils.DatabaseHelper;
+import utils.TestUserHelper;
 
 import static config.Config.*;
 import static io.qameta.allure.SeverityLevel.CRITICAL;
@@ -256,25 +256,22 @@ public class LoginTest extends BaseTest {
     @DisplayName("Login with Locked-After-Multiple-Failure account should be rejected")
     @Description("Test verifies that Locked-After-Multiple-Failure attempts in login credentials are properly rejected")
     void loginWithLockedAfterMultipleFailure() {
-        String testUser = "testlockuser";
+        String testUser = TestUserHelper.registerTestUser();
+        assertNotNull(testUser, "Test user should be registered successfully");
 
-        try {
-            loginPage = new LoginPage(page);
-            loginPage = loginPage.lockUserAfterMultipleFailureAttempts(testUser, "wrong_password");
+        loginPage = new LoginPage(page);
+        loginPage = loginPage.lockUserAfterMultipleFailureAttempts(testUser, "wrong_password");
 
-            assertTrue(
-                    page.url().contains("/login"),
-                    "Login locked user should be rejected - user should remain on login page"
-            );
+        assertTrue(
+                page.url().contains("/login"),
+                "Login locked user should be rejected - user should remain on login page"
+        );
 
-            assertEquals(
-                    TOO_MANY_FAILED_ATTEMPTS_HINT,
-                    loginPage.getLockedUserHint(),
-                    "Error message should indicate account is locked"
-            );
-        } finally {
-            DatabaseHelper.unlockUser(testUser);
-        }
+        assertEquals(
+                TOO_MANY_FAILED_ATTEMPTS_HINT,
+                loginPage.getLockedUserHint(),
+                "Error message should indicate account is locked"
+        );
     }
 
     @Test
