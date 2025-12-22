@@ -5,6 +5,8 @@ import com.microsoft.playwright.options.AriaRole;
 import config.Config;
 import pages.enums.LoginSubmitType;
 
+import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertThat;
+
 public class LoginPage {
 
     private final Page page;
@@ -16,6 +18,7 @@ public class LoginPage {
     private static final String INVALID_PASSWORD_DIV = "//div[@id='password-error-message']";
     private static final String INVALID_USERNAME_PASSWORD_DIV = "//div[@id='login-error-message']";
     public static final String INVALID_USERNAME_OR_PASSWORD_HINT = "Invalid username or password. Please try again.";
+    public static final String TOO_MANY_FAILED_ATTEMPTS_HINT = "Too many failed attempts. Please try again later.";
     public static final String EMPTY_USERNAME_HINT = "Username or email is required";
     public static final String EMPTY_PASSWORD_HINT = "Password is required";
 
@@ -104,7 +107,6 @@ public class LoginPage {
         page.fill(USERNAME_INPUT, nonExistentLogin);
         page.fill(PASSWORD_INPUT, nonExistentPassword);
         page.locator(SUBMIT_BUTTON).click();
-        page.locator(SUBMIT_BUTTON).click();
 
         return this;
     }
@@ -114,8 +116,21 @@ public class LoginPage {
         page.fill(USERNAME_INPUT, injectionLogin);
         page.fill(PASSWORD_INPUT, injectionPassword);
         page.locator(SUBMIT_BUTTON).click();
-        page.locator(SUBMIT_BUTTON).click();
 
+        return this;
+    }
+
+    public LoginPage lockUserAfterMultipleFailureAttempts(String login, String wrongPassword) {
+        open();
+        for (int i = 0; i < 5; i++) {
+            page.fill(USERNAME_INPUT, login);
+            page.fill(PASSWORD_INPUT, wrongPassword);
+            page.locator(SUBMIT_BUTTON).click();
+            assertThat(page.locator(INVALID_USERNAME_PASSWORD_DIV)).hasText(INVALID_USERNAME_OR_PASSWORD_HINT);
+        }
+        page.fill(USERNAME_INPUT, login);
+        page.fill(PASSWORD_INPUT, wrongPassword);
+        page.locator(SUBMIT_BUTTON).click();
         return this;
     }
 
@@ -126,7 +141,12 @@ public class LoginPage {
     public String getInvalidPasswordHint() {
         return page.locator(INVALID_PASSWORD_DIV).textContent();
     }
+
     public String getInvalidEmailOrPasswordHint() {
+        return page.locator(INVALID_USERNAME_PASSWORD_DIV).textContent();
+    }
+
+    public String getLockedUserHint() {
         return page.locator(INVALID_USERNAME_PASSWORD_DIV).textContent();
     }
 }
